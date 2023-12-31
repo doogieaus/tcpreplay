@@ -53,6 +53,16 @@ extern tcpedit_t *tcpedit;
 
 #endif /* TCPREPLAY */
 
+
+#ifndef HAVE_FREEBSD
+/* Size of the L2 frame header we need to add */
+#define L2_FRAME_SIZE 14
+#else
+/* For some reason on FreeBSD there's an extra 4 bytes at the front that
+   we can ignore, so we only need to increase the size by 10 bytes */
+#define L2_FRAME_SIZE 10
+#endif
+
 #include "send_packets.h"
 #include "sleep.h"
 
@@ -353,6 +363,7 @@ send_packets(tcpreplay_t *ctx, pcap_t *pcap, int idx)
     bool top_speed = (options->speed.mode == speed_topspeed ||
                       (options->speed.mode == speed_mbpsrate && options->speed.speed == 0));
     bool now_is_now = true;
+    static u_char *newpacket = NULL; /* full packet buffer */
 
     gettimeofday(&now, NULL);
     if (!timerisset(&stats->start_time)) {
@@ -418,6 +429,49 @@ send_packets(tcpreplay_t *ctx, pcap_t *pcap, int idx)
                 ++stats->failed;
                 continue;
             }
+        }
+
+        if (ctx->options->l2_encapsulate) {
+            /* edit packet to encapsulate in an ethernet frame */
+            
+            if (newpacket == NULL) {
+                /* create packet buffers */
+                newpacket = (u_char *)safe_malloc(MAXPACKET);
+            } else {
+                /* zero out the old packet info */
+                memset(newpacket, '\0', MAXPACKET);
+            }
+
+            /* copy the IPv4 packet */
+            memcpy(newpacket + L2_FRAME_SIZE, pktdata, pkthdr.caplen);
+
+            /* set the destination MAC */
+            newpacket[0] = 0x00;
+            newpacket[1] = 0x00;
+            newpacket[2] = 0x00;
+            newpacket[3] = 0x00;
+            newpacket[4] = 0x00;
+            newpacket[5] = 0x00;
+
+            /* set the source MAC */
+            newpacket[6] = 0x00;
+            newpacket[7] = 0x00;
+            newpacket[8] = 0x00;
+            newpacket[9] = 0x00;
+            newpacket[10] = 0x00;
+            newpacket[11] = 0x00;
+
+            /* set the packet type: IPv4 */
+            newpacket[12] = 0x08;
+            newpacket[13] = 0x00;
+            
+            /* update packet lengths */
+            pkthdr.caplen += L2_FRAME_SIZE;
+            pkthdr.len += L2_FRAME_SIZE;
+            pktlen += L2_FRAME_SIZE;
+
+            /* copy the packet data back */
+            memcpy(pktdata, newpacket, pktlen);
         }
 
         /* update flow stats */

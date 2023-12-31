@@ -148,6 +148,8 @@ typedef struct tcpreplay_opt_s {
     bool flow_stats;
     int flow_expiry;
 
+    bool l2_encapsulate;
+
     int unique_ip;
     float unique_loops;
 } tcpreplay_opt_t;
@@ -230,6 +232,7 @@ int tcpreplay_set_dualfile(tcpreplay_t *, bool);
 int tcpreplay_set_tcpprep_cache(tcpreplay_t *, char *);
 int tcpreplay_add_pcapfile(tcpreplay_t *, char *);
 int tcpreplay_set_preload_pcap(tcpreplay_t *, bool);
+int tcpreplay_set_l2_encapsulate(tcpreplay_t *, bool);
 
 /* information */
 int tcpreplay_get_source_count(tcpreplay_t *);

@@ -219,6 +219,15 @@ statistics collected from the first loop iteration.
 EOText;
 };
 
+flag = {
+    name        = l2_encapsulate;
+    descrip     = "Encapsulate IPv4 traffic in an Ethernet frame for L2 devices";
+    doc         = <<- EOText
+Note, this option is pretty dangerous!  We assume all traffic is IPv4 and add
+a fake SRC and DST MAC address into the packets.
+EOText;
+};
+
 /*
  * Output modifiers: -c
  */

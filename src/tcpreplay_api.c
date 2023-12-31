@@ -285,6 +285,10 @@ tcpreplay_post_args(tcpreplay_t *ctx, int argc)
         options->flow_expiry = OPT_VALUE_FLOW_EXPIRY;
     }
 
+    if (HAVE_OPT(L2_ENCAPSULATE)) {
+        options->l2_encapsulate = true;
+    }
+
     if (HAVE_OPT(TIMER)) {
         if (strcmp(OPT_ARG(TIMER), "select") == 0) {
 #ifdef HAVE_SELECT
@@ -698,6 +702,17 @@ tcpreplay_set_preload_pcap(tcpreplay_t *ctx, bool value)
 {
     assert(ctx);
     ctx->options->preload_pcap = value;
+    return 0;
+}
+
+/**
+ * \brief Enable L2 encapsulation of L3 traffic
+ */
+int
+tcpreplay_set_l2_encapsulate(tcpreplay_t *ctx, bool value)
+{
+    assert(ctx);
+    ctx->options->l2_encapsulate = value;
     return 0;
 }
 
